@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: tu-canasta-backend
+    env: python
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn tu_canasta_backend.wsgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: tu_canasta_backend.settings
+      - key: PYTHON_VERSION
+        value: 3.12.4
