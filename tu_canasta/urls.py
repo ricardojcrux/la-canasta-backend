@@ -1,12 +1,18 @@
-from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-urlpatterns = [
-    # Add your URL patterns here
-]
+from .views import (
+    ProductViewSet,
+    ShoppingListItemViewSet,
+    ShoppingListViewSet,
+    UserViewSet,
+)
 
 router = DefaultRouter()
-# Register your viewsets here
-# router.register(r'example', ExampleViewSet)
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'products', ProductViewSet, basename='product')
+router.register(r'shopping-lists', ShoppingListViewSet, basename='shopping-list')
+router.register(
+    r'shopping-list-items', ShoppingListItemViewSet, basename='shopping-list-item'
+)
 
-urlpatterns += router.urls
+urlpatterns = router.urls
