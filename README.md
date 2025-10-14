@@ -27,3 +27,10 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
+
+## Endpoints principales
+- `GET /api/` (navegable): incluye enlaces a usuarios, productos y listas.
+- `GET/POST /api/users/`: administración básica de usuarios (passwords se almacenan en hash).
+- `GET/POST /api/products/`: catálogo de productos.
+- `GET/POST /api/shopping-lists/`: cada usuario mantiene su propia lista. Para acceder se debe enviar el encabezado `X-USER-ID` con el identificador del usuario (también aceptado como `?user_id=`).
+- `GET/POST /api/shopping-list-items/`: elementos dentro de la lista del usuario autenticado por encabezado. 
