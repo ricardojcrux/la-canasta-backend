@@ -1,8 +1,7 @@
-from django.db import IntegrityError
 from django.urls import reverse as django_reverse
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
-from rest_framework.exceptions import AuthenticationFailed, ValidationError
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
@@ -67,14 +66,18 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
     """
-    Allows each user to maintain an independent shopping list.
-    Access is restricted via the X-USER-ID header or user_id query parameter.
+    Allows each user to mantener múltiples listas de compras planificadas por fecha.
+    Acceso restringido vía el encabezado X-USER-ID o el parámetro user_id.
     """
     serializer_class = ShoppingListSerializer
 
     def get_queryset(self):
         user = self._get_user()
-        return ShoppingList.objects.filter(user=user).prefetch_related('items__product')
+        return (
+            ShoppingList.objects.filter(user=user)
+            .prefetch_related('items__product')
+            .order_by('-target_date', '-updated_at')
+        )
 
     def _get_user(self) -> User:
         if not hasattr(self.request, '_cached_user_object'):
@@ -83,18 +86,17 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self._get_user()
-        try:
-            serializer.save(user=user)
-        except IntegrityError as exc:
-            raise ValidationError(
-                'El usuario ya tiene una lista de compras registrada.'
-            ) from exc
+        serializer.save(user=user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request_user'] = self._get_user()
+        return context
 
 
 class ShoppingListItemViewSet(viewsets.ModelViewSet):
     """
-    CRUD for the products assigned to a user's shopping list.
-    Each user only manipulates their own list entries.
+    CRUD de los productos dentro de las listas de compras del usuario autenticado.
     """
     serializer_class = ShoppingListItemSerializer
 
@@ -111,9 +113,8 @@ class ShoppingListItemViewSet(viewsets.ModelViewSet):
         return self.request._cached_user_object
 
     def perform_create(self, serializer):
-        user = self._get_user()
-        shopping_list, _ = ShoppingList.objects.get_or_create(user=user)
-        serializer.save(shopping_list=shopping_list)
+        self._get_user()
+        serializer.save()
 
     def perform_update(self, serializer):
         user = self._get_user()
@@ -126,3 +127,8 @@ class ShoppingListItemViewSet(viewsets.ModelViewSet):
         if instance.shopping_list.user_id != user.id:
             raise AuthenticationFailed('No puedes eliminar listas de otros usuarios.')
         instance.delete()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request_user'] = self._get_user()
+        return context
