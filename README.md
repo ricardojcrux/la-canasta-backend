@@ -28,9 +28,23 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+## Funcionalidades clave
+- Registro de usuarios y productos personalizados para construir el inventario base.
+- Gestión de múltiples listas de compras por usuario, cada una con nombre, fecha objetivo y presupuesto opcional.
+- Seguimiento del progreso de compra con conteo de ítems pendientes/comprados y cálculo automático de gasto total vs. presupuesto.
+- Control granular de productos por lista incluyendo cantidad, precio unitario e indicador `is_purchased`.
+
 ## Endpoints principales
-- `GET /api/` (navegable): incluye enlaces a usuarios, productos y listas.
-- `GET/POST /api/users/`: administración básica de usuarios (passwords se almacenan en hash).
+- `GET /api/` (navegable): incluye enlaces a usuarios, productos, listas y elementos.
+- `GET/POST /api/users/`: CRUD básico de usuarios; las contraseñas se almacenan con hash.
 - `GET/POST /api/products/`: catálogo de productos.
-- `GET/POST /api/shopping-lists/`: cada usuario mantiene su propia lista. Para acceder se debe enviar el encabezado `X-USER-ID` con el identificador del usuario (también aceptado como `?user_id=`).
-- `GET/POST /api/shopping-list-items/`: elementos dentro de la lista del usuario autenticado por encabezado. 
+- `GET/POST /api/shopping-lists/`: cada usuario mantiene **múltiples** listas. Requiere `X-USER-ID` o `?user_id=`. Campos relevantes en `POST/PUT/PATCH`:
+  - `title`: nombre de la lista.
+  - `target_date`: fecha planeada de compra (`YYYY-MM-DD`).
+  - `budget`: presupuesto máximo (`Decimal` opcional).
+- `GET/POST /api/shopping-list-items/`: elementos asociados. Requiere el mismo encabezado/parámetro. Campos relevantes:
+  - `shopping_list`: id de la lista destino (debe pertenecer al usuario autenticado).
+  - `product`: id del producto.
+  - `quantity`, `unit_price`, `is_purchased`.
+
+Todos los listados devuelven métricas agregadas (`total_cost`, `total_spent`, `remaining_budget`, etc.) para apoyar el control de gastos en tiempo real.

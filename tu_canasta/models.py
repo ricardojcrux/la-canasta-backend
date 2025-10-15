@@ -1,6 +1,10 @@
+from decimal import Decimal
+from typing import Optional
+
 from django.contrib.auth.hashers import is_password_usable, make_password
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import F, Sum
 
 
 class User(models.Model):
@@ -43,19 +47,66 @@ class Product(models.Model):
 
 
 class ShoppingList(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='shopping_list',
+        related_name='shopping_lists',
+    )
+    title = models.CharField(max_length=255, default='Lista de compras')
+    target_date = models.DateField(blank=True, null=True)
+    budget = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(0)],
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-updated_at']
+        ordering = ['-target_date', '-updated_at']
 
     def __str__(self):
-        return f'Lista de compras de {self.user}'
+        return f'{self.title} ({self.user})'
+
+    @property
+    def total_items(self) -> int:
+        return self.items.count()
+
+    @property
+    def purchased_items(self) -> int:
+        return self.items.filter(is_purchased=True).count()
+
+    @property
+    def pending_items(self) -> int:
+        return self.total_items - self.purchased_items
+
+    @property
+    def total_cost(self) -> Decimal:
+        aggregate = self.items.aggregate(
+            total=Sum(
+                F('quantity') * F('unit_price'),
+                output_field=models.DecimalField(max_digits=12, decimal_places=2),
+            )
+        )
+        return aggregate['total'] or Decimal('0.00')
+
+    @property
+    def total_spent(self) -> Decimal:
+        aggregate = self.items.filter(is_purchased=True).aggregate(
+            total=Sum(
+                F('quantity') * F('unit_price'),
+                output_field=models.DecimalField(max_digits=12, decimal_places=2),
+            )
+        )
+        return aggregate['total'] or Decimal('0.00')
+
+    @property
+    def remaining_budget(self) -> Optional[Decimal]:
+        if self.budget is None:
+            return None
+        return self.budget - self.total_cost
 
 
 class ShoppingListItem(models.Model):
@@ -73,6 +124,13 @@ class ShoppingListItem(models.Model):
         validators=[MinValueValidator(1)],
         default=1,
     )
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        default=0,
+    )
+    is_purchased = models.BooleanField(default=False)
     added_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -87,3 +145,7 @@ class ShoppingListItem(models.Model):
 
     def __str__(self):
         return f'{self.quantity} x {self.product.name}'
+
+    @property
+    def total_price(self) -> Decimal:
+        return self.unit_price * self.quantity
