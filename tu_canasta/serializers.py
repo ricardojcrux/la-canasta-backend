@@ -54,12 +54,7 @@ class ShoppingListItemSerializer(serializers.ModelSerializer):
     )
     product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     product_detail = ProductSerializer(source='product', read_only=True)
-    total_price = serializers.DecimalField(
-        source='total_price',
-        max_digits=12,
-        decimal_places=2,
-        read_only=True,
-    )
+    total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = ShoppingListItem
@@ -103,30 +98,17 @@ class ShoppingListItemSerializer(serializers.ModelSerializer):
 class ShoppingListSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     items = ShoppingListItemSerializer(many=True, read_only=True)
-    total_cost = serializers.DecimalField(
-        source='total_cost',
-        max_digits=12,
-        decimal_places=2,
-        read_only=True,
-    )
-    total_spent = serializers.DecimalField(
-        source='total_spent',
-        max_digits=12,
-        decimal_places=2,
-        read_only=True,
-    )
+    total_cost = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    total_spent = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     remaining_budget = serializers.DecimalField(
-        source='remaining_budget',
         max_digits=12,
         decimal_places=2,
         read_only=True,
         allow_null=True,
     )
-    total_items = serializers.IntegerField(source='total_items', read_only=True)
-    purchased_items = serializers.IntegerField(
-        source='purchased_items', read_only=True
-    )
-    pending_items = serializers.IntegerField(source='pending_items', read_only=True)
+    total_items = serializers.IntegerField(read_only=True)
+    purchased_items = serializers.IntegerField(read_only=True)
+    pending_items = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = ShoppingList
