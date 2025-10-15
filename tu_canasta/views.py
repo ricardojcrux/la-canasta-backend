@@ -90,7 +90,13 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['request_user'] = self._get_user()
+        if hasattr(self.request, '_cached_user_object'):
+            context['request_user'] = self.request._cached_user_object
+        else:
+            try:
+                context['request_user'] = self._get_user()
+            except AuthenticationFailed:
+                pass
         return context
 
 
@@ -130,5 +136,11 @@ class ShoppingListItemViewSet(viewsets.ModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['request_user'] = self._get_user()
+        if hasattr(self.request, '_cached_user_object'):
+            context['request_user'] = self.request._cached_user_object
+        else:
+            try:
+                context['request_user'] = self._get_user()
+            except AuthenticationFailed:
+                pass
         return context
