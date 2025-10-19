@@ -22,7 +22,7 @@ Configura las siguientes variables en `.env` para desarrollo local o en el panel
 ## Ejecución local
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate || source .venv/Scripts/activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
