@@ -89,6 +89,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tu_canasta_backend.wsgi.application'
 
+# little change
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
